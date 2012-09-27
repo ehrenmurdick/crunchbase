@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require 'open-uri'
 require 'progressbar'
 require 'json'
@@ -13,6 +15,9 @@ class Hash
   def try(key)
     self[key]
   end
+end
+
+class InvalidCompany < StandardError
 end
 
 class Company
@@ -44,6 +49,7 @@ class Company
 
 
   attr_accessor :name, :url, :data, :plain_url
+  attr_reader :valid
   def initialize(name, url)
     @name, @plain_url = name, url
     if @plain_url
@@ -54,6 +60,7 @@ class Company
   def fetch!
     JSON.parse(open(url).read)
   rescue JSON::ParserError
+    raise InvalidCompany
   end
 
   def data
@@ -87,7 +94,7 @@ class Company
   end
 
   def roundDate(letter)
-    "#{round(letter).try("month")}/#{round(letter).try("year")}"
+    "#{round(letter).try("funded_month")}/#{round(letter).try("funded_day")}/#{round(letter).try("funded_year")}"
   end
 
   def round(letter)
@@ -109,8 +116,8 @@ File.open("output.csv", "w") do |f|
       line = line.split(',')
       company = Company.new(*line[0,2])
       f.write(CSV.generate_line(company.row))
-    rescue ArgumentError
-      p line
+    rescue InvalidCompany, URI::InvalidURIError, ArgumentError
+      next
     end
   end
 end
