@@ -61,6 +61,9 @@ class Company
     JSON.parse(open(url).read)
   rescue JSON::ParserError
     raise InvalidCompany
+  rescue OpenURI::HTTPError
+    puts url
+    raise InvalidCompany
   end
 
   def data
